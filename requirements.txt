@@ -1,3 +1,0 @@
-requests==2.6.0
-bottle==0.12.9
-WebTest==2.0.20

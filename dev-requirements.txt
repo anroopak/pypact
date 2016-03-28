@@ -1,0 +1,10 @@
+flake8>=2.4.0
+mock>=1.0.1
+pytest>=2.6.4
+pytest-cov>=1.8.1
+requests-mock>=0.6.0
+requests==2.6.0
+bottle==0.12.9
+WebTest==2.0.20
+
+-e ./
