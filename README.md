@@ -15,103 +15,93 @@ It is an implementation of https://github.com/bethesque/pact-specification.
 
 ## Client Proposed Usage
 
-### 1. Start with your model
+### 1. Configure Pact
 
 ```python
-class Something(object):
+def mock_server(consumer, provider, port, path):
+    if os.path.exists(path):
+        shutil.rmtree(path)
+    else:
+        os.makedirs(path)
 
-    def __init__(self, name):
-        self.name = name
+    consumer = pypact.Consumer(consumer)
+    provider = pypact.Provider(provider)
+    server = consumer.has_pact_with(provider, port)
 
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.name == other.name
+    return server
+
+def main(argv=None):
+    consumer = "My consumer"
+    provider = "My provider"
+    port = "1234"
+    path = "./pacts"
+
+    server = mock_server(consumer, provider, port, path)
 ```
 
-### 2. Create a skeleton client class
+### 2. Start the mock server
 
 ```python
-class MyServiceProviderClient(object):
+def start_server():
+    pypact.MockServer()
 
-    def __init__(self, base_uri):
-        self.base_uri = base_uri
+def main(argv=None):
+    // Configure pact
 
-    def get_something(self):
-        # Yet to be implemented because we're doing Test First Development...
-        pass
+    p = Process(target=start_server)
+    p.daemon = True
+    p.start()
+    time.sleep(3)
+
+    // Other steps
+
+    p.terminate()
 ```
 
-### 3. Configure the mock server
+### 3. Register the interaction
 
 ```python
-@pytest.fixture(scope="session")
-def my_consumer(request):
-    consumer = pypact.Consumer("My Service Consumer")
+def register_interaction(interaction, url, action):
+    client = pypact.MockServerClient(url)
+    if action == "post":
+        result = client.post_interaction(interaction.to_JSON())
 
+    return result
 
-@pytest.fixture(scope="session")
-def my_service_provider(consumer):
-    return pypact.Provider("My Service Provider")
+def main(argv=None):
+    // Configure pact
+    // Start the mock server
 
-
-@pytest.fixture
-def mock_service(request, my_consumer, my_service_provider):
-    return my_consumer.has_pact_with(my_service_provider, port=1234)
-```
-
-### 4. Write a failing test for the client
-
-```python
-@pytest.fixture
-def subject(mock_service):
-    subject = MyServiceProviderClient(mock_service.base_uri)
-    return subject
-
-
-def test_returns_something(subject, mock_service):
-    """
-    Subject returns a Something
-    """
-    (mock_service
-        .given("something exists")
-        .upon_receiving("a request for something")
-        .with_request(method="get", path="/something")
+    interaction = (server
+        .given("There is a user wih id {23}")
+        .upon_receiving("get request for user with id {23}")
+        .with_request(method="GET", path="/user", query="id=23")
         .will_respond_with(
             status=200,
-            headers={'Content=Type': 'application/json'},
-            body={'name': 'A small something'}))
+            headers={"Content-Type": "application/json"},
+            body={"firstName": "John"}
+        )
+    )
 
-    with mock_service:
-        something = subject.get_something()
+    url = "http://localhost:8080"
+    action = "post"
 
-    assert something == Something(name='A small something')
+    result = register_interaction(interaction, url, action)
+```
+
+### 4. Hit the endpoint
+
+```python
+def main(argv=None):
+    // Configure pact
+    // Start the mock server
+    // Register interaction
+
+    name = requests.get('http://localhost:8080/user?id=23')
 ```
 
 ### 5. Run the tests
 
 ```bash
-$ py.test
-```
-
-### 6. Implement the client
-
-```python
-import requests
-
-class MyServiceProviderClient(object):
-
-    def __init__(self, base_uri):
-        self.base_uri = base_uri
-
-    def get_something(self):
-        """
-        Get a something.
-        """
-        name = requests.get('{}/something'.format(self.base_uri)).json['name']
-        return Something('A small something')
-```
-
-### 7. Run the tests again
-
-```bash
-$ py.test
+$ python pypact/test/test_end2end.py
 ```

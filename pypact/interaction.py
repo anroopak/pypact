@@ -1,3 +1,5 @@
+import json
+
 class Interaction(object):
     """
     Builder for interaction dictionaries
@@ -10,6 +12,12 @@ class Interaction(object):
         self.description = None
         self.request = None
         self.response = None
+
+    def to_JSON(self):
+        json = self.__dict__
+        if 'add_method' in json:
+            del json['add_method']
+        return json
 
     def given(self, provider_state):
         self.provider_state = provider_state
@@ -48,6 +56,8 @@ class Interaction(object):
             self.response['body'] = body
 
         self.add_interaction()
+
+        return self
 
     def add_interaction(self):
         self.add_method({

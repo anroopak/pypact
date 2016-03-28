@@ -1,7 +1,7 @@
 from setuptools import setup
 
 VERSION = "0.0.1"
-REQUIRES = ["requests>=2.6.0"]
+REQUIRES = ["requests>=2.6.0", "bottle==0.12.9", "WebTest==2.0.20"]
 
 setup(
     name='pypact',

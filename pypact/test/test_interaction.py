@@ -1,7 +1,6 @@
 import mock
 import pytest
-
-from ..interaction import Interaction
+import pypact
 
 
 TEST_STATE = "a state"
@@ -25,7 +24,7 @@ def mock_add_method():
 
 @pytest.fixture
 def interaction(mock_add_method):
-    return Interaction(mock_add_method)
+    return pypact.Interaction(mock_add_method)
 
 
 def test_interaction_creation(interaction, mock_add_method):

@@ -1,19 +1,18 @@
 import mock
 import pytest
-
-from ..consumer import Consumer
-
+import pypact
 
 CONSUMER_NAME = "My Service Consumer"
 
 
 @pytest.fixture
 def consumer():
-    return Consumer(name=CONSUMER_NAME)
+    return pypact.Consumer(name=CONSUMER_NAME)
 
 
-def test_consumer_creation(consumer):
-    assert consumer.name == CONSUMER_NAME
+@pytest.fixture
+def interaction():
+	return pypact.Interaction(mock_add_method)
 
 
 def test_consumer_pact(consumer):
