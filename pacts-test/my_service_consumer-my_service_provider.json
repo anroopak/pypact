@@ -1,0 +1,8 @@
+{
+    "consumer":"my service consumer",
+    "interactions":{},
+    "metadata":{
+        "pactSpecificationVersion":"1.1.0"
+    },
+    "provider":"my service provider"
+}

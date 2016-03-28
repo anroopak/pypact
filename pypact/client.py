@@ -22,20 +22,22 @@ class MockServerClient(requests.Session):
             '{}/interactions/verification'.format(self.base_uri)
             ).text
 
-    def put_interactions(self, interactions):
+    def put_interactions(self, interaction):
         self.put(
-            '{}/interactions'.format(self.base_uri),
-            data=json.dumps(interactions)
-        )
-
-    def delete_interactions(self):
-        self.delete('{}/interactions'.format(self.base_uri))
-
-    def post_interaction(self, interaction):
-        self.post(
             '{}/interactions'.format(self.base_uri),
             data=json.dumps(interaction)
         )
+
+    def delete_interactions(self):
+        result = self.delete('{}/interactions'.format(self.base_uri))
+        return result.text
+
+    def post_interactions(self, interaction):
+        result = self.post(
+            '{}/interactions'.format(self.base_uri),
+            data=json.dumps(interaction)
+        )
+        return result.text
 
     def post_pact(self, pact_details):
         self.post(

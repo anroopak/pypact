@@ -1,0 +1,102 @@
+{
+    "consumer":"my consumer",
+    "interactions":[
+        {
+            "description":"get request for user with id {23}",
+            "provider_state":"There is a user wih id {23}",
+            "request":{
+                "method":"get",
+                "path":"/user",
+                "query":"id=23"
+            },
+            "response":{
+                "body":{
+                    "firstName":"John"
+                },
+                "headers":{
+                    "Content-Type":"application/json"
+                },
+                "status":200
+            }
+        },
+        {
+            "description":"post request for user with id {24}",
+            "provider_state":"There is a new user wih id {24}",
+            "request":{
+                "body":{
+                    "firstName":"John",
+                    "lastName":"Doe"
+                },
+                "headers":{
+                    "Content-Type":"application/json"
+                },
+                "method":"post",
+                "path":"/user",
+                "query":"id=24"
+            },
+            "response":{
+                "body":{
+                    "result":true
+                },
+                "headers":{
+                    "Content-Type":"application/json"
+                },
+                "status":201
+            }
+        },
+        {
+            "description":"post request for user with id {24}",
+            "provider_state":"There is a new user wih id {24}",
+            "request":{
+                "body":{
+                    "firstName":"John",
+                    "lastName":"Deer"
+                },
+                "headers":{
+                    "Content-Type":"application/json"
+                },
+                "method":"post",
+                "path":"/user",
+                "query":"id=24"
+            },
+            "response":{
+                "body":{
+                    "result":false
+                },
+                "headers":{
+                    "Content-Type":"application/json"
+                },
+                "status":201
+            }
+        },
+        {
+            "description":"post request for user with id {24}",
+            "provider_state":"There is a new user wih id {24}",
+            "request":{
+                "body":{
+                    "firstName":"John",
+                    "lastName":"Deer"
+                },
+                "headers":{
+                    "Content-Type":"application/json"
+                },
+                "method":"put",
+                "path":"/user",
+                "query":"id=24"
+            },
+            "response":{
+                "body":{
+                    "text":"Upload Successful"
+                },
+                "headers":{
+                    "Content-Type":"application/json"
+                },
+                "status":200
+            }
+        }
+    ],
+    "metadata":{
+        "pactSpecificationVersion":"1.1.0"
+    },
+    "provider":"my provider"
+}

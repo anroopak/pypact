@@ -1,16 +1,14 @@
-from .exceptions import PyPactServiceException
-
+import pypact
 
 class MockService(object):
     """
     Interface to interact with pact mock server.
     """
 
-    def __init__(self, consumer, provider, port, interaction_builder=None):
+    def __init__(self, consumer, provider, port):
         self.consumer = consumer
         self.provider = provider
         self.port = port
-        self.interaction_builder = interaction_builder
 
         self.stopped = True
         self.interactions = []
@@ -23,6 +21,9 @@ class MockService(object):
             self.interaction_builder(self.add_interaction)
                 .upon_receiving(description))
 
+    def interaction_builder(self, add_method):
+        return pypact.Interaction(add_method)
+
     def add_interaction(self, interaction):
         """
         Add a new interaction to the mock service.
@@ -34,7 +35,7 @@ class MockService(object):
         Start the mock service, loading the interactions into the pact server.
         """
         if not self.stopped:
-            raise PyPactServiceException(
+            raise pypact.PyPactServiceException(
                 "Cannot start already started MockService.")
 
         self.stopped = False
@@ -44,7 +45,7 @@ class MockService(object):
         End the mock service, verifing the interactions with the pact server.
         """
         if self.stopped:
-            raise PyPactServiceException(
+            raise pypact.PyPactServiceException(
                 "Cannot end already ended MockService.")
 
         self.stopped = True
