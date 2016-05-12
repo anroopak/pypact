@@ -21,43 +21,35 @@ class MockServer(object):
         self._app.route(path='/interactions', method=['POST', 'DELETE'], callback=self._interactions)
         self._app.route(path='/interactions/verification', method='GET', callback=self._verification)
 
-
     def start(self):
         self._app.run(host=self._host, port=self._port)
 
 
     def dynamic_route(self):
-        if request.query_string != '':
-            query = request.query_string
-        else:
-            query = 'no_query_string'
+        query = request.query_string if request.query_string else 'no_query_string'
 
-        if request.body.getvalue() != '':
-            body = request.body.getvalue()
-            try:
-                body = json.loads(body)
-            except (TypeError, Exception) as e:
-                logging.warning('The body in this request is not json: %s' % (e))
+        try:
+            body = json.loads(request.body.getvalue())
+        except (TypeError, Exception) as e:
+            logging.warning('The body in this request is not json: %s' % e)
         else:
             body = 'no_body'
 
         for dr in self.dynamic_routes:
-            if dr['method'] != request.method:
+            if dr.get('method', None) != request.method:
                 continue
-            if dr['path'] != request.path:
+            if dr.get('path', None) != request.path:
                 continue
-            if dr['query'] != query:
+            if dr.get('query', None) != query:
                 continue
-            if dr['body'] != body:
+            if dr.get('body', None) != body:
                 continue
-            r = dr['response']
-            dr['received_requests'] = dr['received_requests'] + 1
+            r = dr.get('response', {})
+            dr['received_requests'] = dr.get('received_requests', 0) + 1
             break
 
-        string_headers = {}
-        for i, v in r['headers'].iteritems():
-          string_headers[str(i)] = str(v)
-
+        # convert the items into string key value pairs
+        string_headers = { str(i): str(v) for i,v in r['headers'].iteritems() }
 
         return HTTPResponse(status=r['status'], body=r['body'], headers=string_headers)
 
@@ -67,8 +59,7 @@ class MockServer(object):
 
 
     def append_route(self, description, provider_state, method, path, query, body, pact_response):
-        self.dynamic_routes.append(
-            {
+        self.dynamic_routes.append({
                 'description': description,
                 'provider_state': provider_state,
                 'method': method,
@@ -78,88 +69,91 @@ class MockServer(object):
                 'response': pact_response,
                 'received_requests': 0,
                 'expected_requests': 1
-            }
-        )
+        })
+
+
+    def _get_interaction_params(self, interaction):
+        return (interaction.get('request', {}), interaction.get('response', {}), interaction.get('description', ''),
+            interaction.get('provider_state', ''))
+
+
+    def _get_pact_request_params(self, pact_request):
+        return (pact_request('path', ''), pact_request('method', '').upper(),
+            pact_request.get('query', 'no_query_string'), pact_request.get('body', 'no_body'))
+
+
+    def _get_pact_response_params(self, pact_response):
+        response = deepcopy(pact_response)
+        response['headers'] = response.get('headers', {})
+        response['status'] = response.get('status', 200)
+        response['body'] = response.get('body', '')
+        return response
 
 
     def _interactions(self):
-        if request.method == 'POST':
+        verb = request.method.lower()
 
-            interaction = json.loads(request.body.read())
+        if verb == 'POST':
+            return self._post_interaction(request)
+        elif verb == 'DELETE':
+            return self._delete_interaction()
 
-            pact_request = interaction['request']
-            pact_response = interaction['response']
+    def _post_interaction(self, request):
+        interaction = json.loads(request.body.read())
+        pact_request, pact_response, description, provider_state = self._get_interaction_params(interaction)
+        path, method, query, body = self._get_pact_request_params(pact_request)
+        pact_response = self._get_pact_response_params(pact_response)
 
-            path = pact_request['path']
-            method = pact_request['method'].upper()
-            description = interaction['description']
-            provider_state = interaction['provider_state']
-            if 'query' in pact_request:
-                query = pact_request['query']
-            else:
-                query = 'no_query_string'
-            if 'body' in pact_request:
-                body = pact_request['body']
-            else:
-                body = 'no_body'
+        if not len(self.dynamic_routes):
+            self.append_route(description, provider_state, method, path, query, body, pact_response)
+        else:
+            match = False
 
-
-
-            if 'headers' not in pact_response:
-                pact_response['headers'] = {}
-
-            if 'status' not in pact_response:
-                pact_response['status'] = 200
-
-            if 'body' not in pact_response:
-                pact_response['body'] = ''
-
-            if len(self.dynamic_routes) == 0:
-                self.append_route(description, provider_state, method, path, query, body, pact_response)
-            else:
-                match = False
-                for dr in self.dynamic_routes:
-                    if (dr['description'] == description and dr['provider_state'] == provider_state and dr['method'] == method 
-                        and dr['path'] == path and dr['query'] == query and dr['body'] == body and dr['response'] == pact_response):
-                        dr['expected_requests'] = dr['expected_requests'] + 1
-                        match = True
-                        break
-                if match == False:
-                    self.append_route(description, provider_state, method, path, query, body, pact_response)
-            methods = []
             for dr in self.dynamic_routes:
-                if dr['path'] == path:
-                    methods.append(dr['method'])
+                if dr.get('description', '') == description:
+                    continue
+                if dr.get('provider_state', '') == provider_state:
+                    continue
+                if dr.get('method', '') == method:
+                    continue
+                if dr.get('path', '') == path:
+                    continue
+                if dr.get('query', '') == query:
+                    continue
+                if dr.get('body', '') == body:
+                    continue
+                if dr.get('response', '') == pact_response:
+                    continue
 
-            self._app.route(path, methods, self.dynamic_route)
+                dr['expected_requests'] = dr.get('expected_requests', 0) + 1
+                match = True
+                break
+            if not match:
+                self.append_route(description, provider_state, method, path, query, body, pact_response)
 
-            self.registered_interactions.update(interaction)
+        methods = [dr.get('method') for dr in self.dynamic_routes if dr.get('path', None) == path]
 
-            return 'Processed Interactions'
+        self._app.route(path, methods, self.dynamic_route)
 
-        elif request.method == 'DELETE':
+        self.registered_interactions.update(interaction)
 
-            routes_to_clear = []
-            for _route in self._app.routes:
-                if _route.rule != '/interactions':
-                    routes_to_clear.append(_route)        
-            for _route in routes_to_clear:
+        return 'Processed Interactions'
+
+    def _delete_interaction(self):
+        self.registered_interactions = {}
+
+        for _route in self._app.routes:
+            if _route.rule != '/interactions':
                 self._app.route(_route.rule, _route.method, self.clear_route)
-            self.registered_interactions = {}
-            return 'Cleared Interactions'
+
+        return 'Cleared Interactions'
 
 
     def _verification(self):
         mismatched = True
-        vr = VerificationResults()
-        mismatched_interactions = []
-        
-        for dr in self.dynamic_routes:
-            if dr['expected_requests'] != dr['received_requests']:
-                mismatched = False
-                mismatched_interactions.append(dr)
+        results = VerificationResults()
 
-        if mismatched == True:
-            return vr.VerificationPassed()
-        else:
-            return vr.VerificationFailed() % (mismatched_interactions)
+        is_mismatched = lambda dr: dr.get('expected_requests', None) == dr.get('received_requests', None)
+        mismatched_interactions = [dr for dr in self.dynamic_routes if is_mismatched(dr)]
+
+        return results.VerificationPassed() if not len(mismatched_interactions) else results.VerificationFailed(mismatched_interactions)

@@ -13,19 +13,22 @@ class Interaction(object):
         self.request = None
         self.response = None
 
+
     def to_JSON(self):
         json = self.__dict__
-        if 'add_method' in json:
-            del json['add_method']
+        json.pop('add_method', None)
         return json
+
 
     def given(self, provider_state):
         self.provider_state = provider_state
         return self
 
+
     def upon_receiving(self, description):
         self.description = description
         return self
+
 
     def with_request(self, method, path, query=None, headers=None, body=None):
         self.request = {
@@ -44,6 +47,7 @@ class Interaction(object):
 
         return self
 
+
     def will_respond_with(self, status, headers=None, body=None):
         self.response = {
             'status': status
@@ -58,6 +62,7 @@ class Interaction(object):
         self.add_interaction()
 
         return self
+
 
     def add_interaction(self):
         self.add_method({

@@ -17,10 +17,12 @@ class MockServerClient(requests.Session):
         self.base_uri = base_uri
         self.headers.update(CLIENT_HEADERS)
 
+
     def get_verification(self):
         return self.get(
             '{}/interactions/verification'.format(self.base_uri)
             ).text
+
 
     def put_interactions(self, interaction):
         self.put(
@@ -28,9 +30,11 @@ class MockServerClient(requests.Session):
             data=json.dumps(interaction)
         )
 
+
     def delete_interactions(self):
         result = self.delete('{}/interactions'.format(self.base_uri))
         return result.text
+
 
     def post_interactions(self, interaction):
         result = self.post(
@@ -38,6 +42,7 @@ class MockServerClient(requests.Session):
             data=json.dumps(interaction)
         )
         return result.text
+
 
     def post_pact(self, pact_details):
         self.post(
