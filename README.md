@@ -2,18 +2,20 @@
 
 *Warning: currently a stub, nothing currently implemented!*
 
-pypact is a consumer driven contract testing library that allows mocking of
-responses in the consumer codebase, and verification of the interaction in the
-provider codebase.
+**pypact** is a [consumer driven contract
+testing](http://martinfowler.com/articles/consumerDrivenContracts.html) library
+that allows mocking of responses in the consumer codebase, and verification of
+the interaction in the provider codebase.
 
-It is an implementation of https://github.com/bethesque/pact-specification.
+**pypact** is an implementation of the [Pact Specification
+(v1.1)](https://github.com/bethesque/pact-specification).
 
 ## CI Status
 
 [![travis-ci.org Build Status](https://travis-ci.org/hartror/pypact.png)](https://travis-ci.org/hartror/pypact)
 [![Coverage Status](https://coveralls.io/repos/hartror/pypact/badge.svg)](https://coveralls.io/r/hartror/pypact)
 
-## Client Proposed Usage
+## How to use
 
 ### 1. Configure Pact
 
