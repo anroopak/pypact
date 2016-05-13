@@ -2,7 +2,7 @@ import mock
 import pytest
 import pypact
 
-CONSUMER_NAME = "My Service Consumer"
+CONSUMER_NAME = 'My Service Consumer'
 
 
 @pytest.fixture
@@ -12,7 +12,9 @@ def consumer():
 
 @pytest.fixture
 def interaction():
-	return pypact.Interaction(mock_add_method)
+    # TODO find out what mock_add_method is
+    def stub(): pass
+    return pypact.Interaction(stub)
 
 
 def test_consumer_pact(consumer):

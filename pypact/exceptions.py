@@ -18,14 +18,14 @@ class PyPactServiceException(PyPactException):
 
 
 class PyPactNullConsumerException(PyPactException):
-	"""
-	Raised by the Builder if there is a null consumer.
-	"""
-	pass
+    """
+    Raised by the Builder if there is a null consumer.
+    """
+    pass
 
 
 class PyPactNullProviderException(PyPactException):
-	"""
-	Raised by the Builder if there is a null provider.
-	"""
-	pass
+    """
+    Raised by the Builder if there is a null provider.
+    """
+    pass

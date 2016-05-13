@@ -1,10 +1,10 @@
-import json
-import StringIO
-import logging
+from copy import deepcopy
+from json import loads as from_json
+from logging import warning as warn
+from bottle import request, HTTPResponse, Bottle
 
-from bottle import template, request, response, HTTPResponse, Bottle
-from datetime import datetime
 from pypact.verifications import VerificationResults
+
 
 class MockServer(object):
     def __init__(self, host, port):
@@ -16,28 +16,23 @@ class MockServer(object):
         self._app = Bottle()
         self._route()
 
-
     def _route(self):
         self._app.route(path='/interactions', method=['POST', 'DELETE'], callback=self._interactions)
         self._app.route(path='/interactions/verification', method='GET', callback=self._verification)
 
-
     def start(self):
         self._app.run(host=self._host, port=self._port)
 
-
     def dynamic_route(self):
-        if request.query_string != '':
-            query = request.query_string
-        else:
-            query = 'no_query_string'
+        query = request.query_string if request.query_string else 'no_query_string'
 
-        if request.body.getvalue() != '':
-            body = request.body.getvalue()
+        body = request.body.getvalue()
+
+        if body:
             try:
-                body = json.loads(body)
+                body = from_json(body)
             except (TypeError, Exception) as e:
-                logging.warning('The body in this request is not json: %s' % (e))
+                warn('The body in this request is not json: %s' % (e))
         else:
             body = 'no_body'
 
@@ -54,21 +49,15 @@ class MockServer(object):
             dr['received_requests'] = dr['received_requests'] + 1
             break
 
-        string_headers = {}
-        for i, v in r['headers'].iteritems():
-          string_headers[str(i)] = str(v)
-
+        string_headers = {str(key): str(value) for key, value in r['headers'].iteritems()}
 
         return HTTPResponse(status=r['status'], body=r['body'], headers=string_headers)
-
 
     def clear_route(self):
         return HTTPResponse(status=500)
 
-
     def append_route(self, description, provider_state, method, path, query, body, pact_response):
-        self.dynamic_routes.append(
-            {
+        self.dynamic_routes.append({
                 'description': description,
                 'provider_state': provider_state,
                 'method': method,
@@ -78,88 +67,75 @@ class MockServer(object):
                 'response': pact_response,
                 'received_requests': 0,
                 'expected_requests': 1
-            }
-        )
+        })
 
+    def _run_post_interaction(self, request):
+        interaction = from_json(request.body.read())
+
+        pact_request = interaction['request']
+        pact_response = interaction['response']
+
+        path = pact_request['path']
+        method = pact_request['method'].upper()
+        methods = []
+        description = interaction['description']
+        provider_state = interaction['provider_state']
+
+        query = pact_request.get('query', 'no_query_string')
+        body = pact_request.get('body', 'no_body')
+
+        pact_response.setdefault('headers', {})
+        pact_response.setdefault('status', 200)
+        pact_response.setdefault('body', '')
+
+        if not len(self.dynamic_routes):
+            self.append_route(description, provider_state, method, path, query, body, pact_response)
+        else:
+            match = False
+            for dr in self.dynamic_routes:
+                if (dr['description'] == description and dr['provider_state'] == provider_state and
+                        dr['method'] == method and dr['path'] == path and dr['query'] == query and
+                        dr['body'] == body and dr['response'] == pact_response):
+                    dr['expected_requests'] = dr['expected_requests'] + 1
+                    match = True
+                    break
+            if not match:
+                self.append_route(description, provider_state, method, path, query, body, pact_response)
+
+        methods = [r.get('method') for r in self.dynamic_routes if r.get('path') == path]
+
+        self._app.route(path, methods, self.dynamic_route)
+
+        self.registered_interactions.update(interaction)
+
+        return 'Processed Interactions'
+
+    def _run_delete_interaction(self):
+        routes_to_clear = deepcopy(self._app.routes)
+
+        for _route in routes_to_clear:
+            if _route.rule != '/interactions':
+                self._app.route(_route.rule, _route.method, self.clear_route)
+
+        self.registered_interactions = {}
+        return 'Cleared Interactions'
 
     def _interactions(self):
-        if request.method == 'POST':
+        verb = request.method.lower()
 
-            interaction = json.loads(request.body.read())
-
-            pact_request = interaction['request']
-            pact_response = interaction['response']
-
-            path = pact_request['path']
-            method = pact_request['method'].upper()
-            description = interaction['description']
-            provider_state = interaction['provider_state']
-            if 'query' in pact_request:
-                query = pact_request['query']
-            else:
-                query = 'no_query_string'
-            if 'body' in pact_request:
-                body = pact_request['body']
-            else:
-                body = 'no_body'
-
-
-
-            if 'headers' not in pact_response:
-                pact_response['headers'] = {}
-
-            if 'status' not in pact_response:
-                pact_response['status'] = 200
-
-            if 'body' not in pact_response:
-                pact_response['body'] = ''
-
-            if len(self.dynamic_routes) == 0:
-                self.append_route(description, provider_state, method, path, query, body, pact_response)
-            else:
-                match = False
-                for dr in self.dynamic_routes:
-                    if (dr['description'] == description and dr['provider_state'] == provider_state and dr['method'] == method 
-                        and dr['path'] == path and dr['query'] == query and dr['body'] == body and dr['response'] == pact_response):
-                        dr['expected_requests'] = dr['expected_requests'] + 1
-                        match = True
-                        break
-                if match == False:
-                    self.append_route(description, provider_state, method, path, query, body, pact_response)
-            methods = []
-            for dr in self.dynamic_routes:
-                if dr['path'] == path:
-                    methods.append(dr['method'])
-
-            self._app.route(path, methods, self.dynamic_route)
-
-            self.registered_interactions.update(interaction)
-
-            return 'Processed Interactions'
-
-        elif request.method == 'DELETE':
-
-            routes_to_clear = []
-            for _route in self._app.routes:
-                if _route.rule != '/interactions':
-                    routes_to_clear.append(_route)        
-            for _route in routes_to_clear:
-                self._app.route(_route.rule, _route.method, self.clear_route)
-            self.registered_interactions = {}
-            return 'Cleared Interactions'
-
+        if verb == 'post':
+            return self._run_post_interaction(request)
+        elif verb == 'delete':
+            return self._run_delete_interaction()
 
     def _verification(self):
-        mismatched = True
         vr = VerificationResults()
-        mismatched_interactions = []
-        
-        for dr in self.dynamic_routes:
-            if dr['expected_requests'] != dr['received_requests']:
-                mismatched = False
-                mismatched_interactions.append(dr)
 
-        if mismatched == True:
+        def is_mismatch(row): return row.get('expected_requests') != row.get('received_requests')
+
+        mismatched_interactions = [dr for dr in self.dynamic_routes if is_mismatch(dr)]
+
+        if not len(mismatched_interactions):
             return vr.VerificationPassed()
         else:
-            return vr.VerificationFailed() % (mismatched_interactions)
+            return vr.VerificationFailed(mismatched_interactions)

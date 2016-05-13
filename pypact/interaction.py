@@ -1,5 +1,3 @@
-import json
-
 class Interaction(object):
     """
     Builder for interaction dictionaries
@@ -15,9 +13,12 @@ class Interaction(object):
 
     def to_JSON(self):
         json = self.__dict__
-        if 'add_method' in json:
-            del json['add_method']
+        json.pop('add_method', None)
         return json
+
+    def safe_assign(self, dictionary, key_values):
+        dictionary.update({key: value for key, value in key_values.iteritems() if value})
+        return dictionary
 
     def given(self, provider_state):
         self.provider_state = provider_state
@@ -28,32 +29,26 @@ class Interaction(object):
         return self
 
     def with_request(self, method, path, query=None, headers=None, body=None):
-        self.request = {
+        data = {
             'method': method.lower(),
-            'path': path
+            'path': path,
+            'query': query,
+            'headers': headers,
+            'body': body
         }
 
-        if query is not None:
-            self.request['query'] = query
-
-        if headers is not None:
-            self.request['headers'] = headers
-
-        if body is not None:
-            self.request['body'] = body
+        self.request = self.safe_assign({}, data)
 
         return self
 
     def will_respond_with(self, status, headers=None, body=None):
-        self.response = {
-            'status': status
+        data = {
+            'status': status,
+            'headers': headers,
+            'body': body
         }
 
-        if headers is not None:
-            self.response['headers'] = headers
-
-        if body is not None:
-            self.response['body'] = body
+        self.response = self.safe_assign({}, data)
 
         self.add_interaction()
 
