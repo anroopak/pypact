@@ -3,8 +3,8 @@ import pytest
 import pypact
 
 
-TEST_STATE = "a state"
-TEST_DESCRIPTION = "a request"
+TEST_STATE = 'a state'
+TEST_DESCRIPTION = 'a request'
 TEST_REQUEST = {
     'method': 'post',
     'path': '/path',
@@ -66,10 +66,10 @@ def test_interaction_with_response(interaction, mock_add_method):
 
 def test_interaction_given_build(interaction, mock_add_method):
     (interaction
-        .given("a state")
+        .given('a state')
         .upon_receiving('a request')
         .with_request(
-            method="post",
+            method='post',
             path='/path',
             query='foo=bar',
             headers={'Custom-Header': 'value'},

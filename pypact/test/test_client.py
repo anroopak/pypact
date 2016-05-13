@@ -1,11 +1,10 @@
-import json
 import pypact
 import pytest
-import requests
 import requests_mock
 
 
 TEST_BASE_URI = 'mock://127.0.0.1:1234'
+
 
 @pytest.fixture
 def client():
@@ -75,4 +74,3 @@ def test_client_post_pact(client, mock_request):
 
     assert mock_request.call_count == 1
     assert mock_request.request_history[0].json() == {}
-

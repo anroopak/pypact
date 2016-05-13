@@ -3,10 +3,10 @@ import pytest
 import pypact
 
 
-PROVIDER_NAME = "My Service Provider"
+PROVIDER_NAME = 'My Service Provider'
 
 
-@pytest.mark.parametrize("args,kwargs", [
+@pytest.mark.parametrize('args,kwargs', [
     ([PROVIDER_NAME], {}),
     ([], {'name': PROVIDER_NAME}),
 ])

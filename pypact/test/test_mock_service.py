@@ -2,6 +2,7 @@ import pytest
 import pypact
 import mock
 
+
 @pytest.fixture
 def mock_consumer():
     return mock.Mock()
@@ -76,8 +77,8 @@ def test_mock_service_starts_and_stops_with_with(mock_service):
     assert mock_service.stopped
 
 
-TEST_STATE = "an alligator exists"
-TEST_DESCRIPTION = "a request for an alligator"
+TEST_STATE = 'an alligator exists'
+TEST_DESCRIPTION = 'a request for an alligator'
 
 
 def test_interaction_builder_returns_interaction(mock_service, mock_add_method):
