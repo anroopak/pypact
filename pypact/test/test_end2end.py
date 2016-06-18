@@ -12,12 +12,12 @@ def start_server(server):
 def register_interaction(url, action, interaction=None):
     client = pypact.MockServerClient(url)
     if action == 'post':
-            interaction = interaction.to_JSON()
-            result = client.post_interactions(interaction)
+        interaction = interaction.to_json()
+        result = client.post_interactions(interaction)
     elif action == 'delete':
-            result = client.delete_interactions()
+        result = client.delete_interactions()
     elif action == 'verify':
-            result = client.get_verification()
+        result = client.get_verification()
     return result
 
 
@@ -42,7 +42,7 @@ def test_server(argv=None):
     time.sleep(3)
 
     interaction = (
-        service.given('There is a user wih id {23}')
+        service.given('There is a user with id {23}')
                .upon_receiving('get request for user with id {23}')
                .with_request(method='GET', path='/user', query='id=23')
                .will_respond_with(

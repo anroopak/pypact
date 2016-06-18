@@ -64,7 +64,7 @@ def main(argv=None):
 def register_interaction(interaction, url, action):
     client = pypact.MockServerClient(url)
     if action == "post":
-        result = client.post_interaction(interaction.to_JSON())
+        result = client.post_interaction(interaction.to_json())
 
     return result
 

@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+
+
 class Interaction(object):
     """
     Builder for interaction dictionaries
@@ -11,14 +14,19 @@ class Interaction(object):
         self.request = None
         self.response = None
 
-    def to_JSON(self):
-        json = self.__dict__
-        json.pop('add_method', None)
-        return json
+    def __str__(self):
+        return '{}-{}'.format(self.provider_state, self.description)
 
-    def safe_assign(self, dictionary, key_values):
-        dictionary.update({key: value for key, value in key_values.iteritems() if value})
-        return dictionary
+    def is_similar(self, other_interaction):
+        return str(self) == str(other_interaction)
+
+    def to_json(self):
+        return {
+            'provider_state': self.provider_state,
+            'description': self.description,
+            'request': self.request,
+            'response': self.response
+        }
 
     def given(self, provider_state):
         self.provider_state = provider_state
@@ -29,7 +37,7 @@ class Interaction(object):
         return self
 
     def with_request(self, method, path, query=None, headers=None, body=None):
-        data = {
+        self.request = {
             'method': method.lower(),
             'path': path,
             'query': query,
@@ -37,18 +45,14 @@ class Interaction(object):
             'body': body
         }
 
-        self.request = self.safe_assign({}, data)
-
         return self
 
     def will_respond_with(self, status, headers=None, body=None):
-        data = {
+        self.response = {
             'status': status,
             'headers': headers,
             'body': body
         }
-
-        self.response = self.safe_assign({}, data)
 
         self.add_interaction()
 

@@ -1,12 +1,15 @@
+from __future__ import absolute_import
+
 from json import dump as to_json
 from os import makedirs
 from os.path import exists, join as join_path
 
+from pypact.constants import PACT_SPECIFICATION_VERSION
 from pypact.consumer import Consumer
 from pypact.provider import Provider
 from pypact.exceptions import PyPactNullProviderException, PyPactNullConsumerException
 
-metadata = {'pactSpecificationVersion': '1.1.0'}
+metadata = {'pactSpecificationVersion': PACT_SPECIFICATION_VERSION}
 
 
 class Builder(object):
@@ -26,6 +29,9 @@ class Builder(object):
         return Provider(provider)
 
     def create_pact(self):
+        """
+        Returns mock service
+        """
         return self.consumer.has_pact_with(self.provider, self.port)
 
     def create_pact_folder(self):

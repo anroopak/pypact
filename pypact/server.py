@@ -1,6 +1,7 @@
 from copy import deepcopy
 from json import loads as from_json
 from logging import warning as warn
+
 from bottle import request, HTTPResponse, Bottle
 
 from pypact.verifications import VerificationResults
@@ -28,6 +29,8 @@ class MockServer(object):
 
         body = request.body.getvalue()
 
+        matching_response = {}
+
         if body:
             try:
                 body = from_json(body)
@@ -37,36 +40,34 @@ class MockServer(object):
             body = 'no_body'
 
         for dr in self.dynamic_routes:
-            if dr['method'] != request.method:
+            if (dr['method'] != request.method or
+                    dr['path'] != request.path or
+                    dr['query'] != query or
+                    dr['body'] != body):
                 continue
-            if dr['path'] != request.path:
-                continue
-            if dr['query'] != query:
-                continue
-            if dr['body'] != body:
-                continue
-            r = dr['response']
+
+            matching_response = dr['response']
             dr['received_requests'] = dr['received_requests'] + 1
             break
 
-        string_headers = {str(key): str(value) for key, value in r['headers'].iteritems()}
+        string_headers = {str(key): str(value) for key, value in matching_response['headers'].iteritems()}
 
-        return HTTPResponse(status=r['status'], body=r['body'], headers=string_headers)
+        return HTTPResponse(status=matching_response['status'], body=matching_response['body'], headers=string_headers)
 
     def clear_route(self):
         return HTTPResponse(status=500)
 
     def append_route(self, description, provider_state, method, path, query, body, pact_response):
         self.dynamic_routes.append({
-                'description': description,
-                'provider_state': provider_state,
-                'method': method,
-                'path': path,
-                'query': query,
-                'body': body,
-                'response': pact_response,
-                'received_requests': 0,
-                'expected_requests': 1
+            'description': description,
+            'provider_state': provider_state,
+            'method': method,
+            'path': path,
+            'query': query,
+            'body': body,
+            'response': pact_response,
+            'received_requests': 0,
+            'expected_requests': 1
         })
 
     def _run_post_interaction(self, request):

@@ -3,8 +3,10 @@
     "interactions":[
         {
             "description":"get request for user with id {23}",
-            "provider_state":"There is a user wih id {23}",
+            "provider_state":"There is a user with id {23}",
             "request":{
+                "body":null,
+                "headers":null,
                 "method":"get",
                 "path":"/user",
                 "query":"id=23"

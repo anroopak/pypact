@@ -1,5 +1,8 @@
 build/*
 .idea/*
+.cache/*
+.ropeproject/*
+.tox/*
 dist/*
 LICENSE.txt
 *.pyc

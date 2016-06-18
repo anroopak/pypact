@@ -1,5 +1,6 @@
 from pypact.exceptions import PyPactServiceException
 from pypact.interaction import Interaction
+from pypact.logger import warn
 
 
 class MockService(object):
@@ -28,7 +29,16 @@ class MockService(object):
         """
         Add a new interaction to the mock service.
         """
-        self.interactions.append(interaction)
+        if self.has_interaction(interaction):
+            warn('The given interaction already exists.' % str(interaction))
+        else:
+            self.interactions.append(interaction)
+
+    def has_interaction(self, interaction):
+        for i in self.interactions:
+            if i == interaction:
+                return True
+        return False
 
     def start(self):
         """
