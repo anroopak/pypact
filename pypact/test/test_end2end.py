@@ -3,7 +3,7 @@ import requests
 import time
 
 from multiprocessing import Process
-
+from pypact.logger import debug
 
 def start_server(server):
     server.start()
@@ -52,6 +52,7 @@ def test_server(argv=None):
             )
     )
 
+    debug(interaction)
     url = 'http://localhost:8080'
     action = 'post'
 

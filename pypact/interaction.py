@@ -3,7 +3,11 @@ from __future__ import absolute_import
 
 class Interaction(object):
     """
-    Builder for interaction dictionaries
+    Builder for interaction dictionaries. Most of the methods in this class
+    return the instance back. This is to be able to chain them. An instance ends
+    up looking something like:
+        {
+        }
     """
 
     def __init__(self, add_method):
@@ -16,9 +20,6 @@ class Interaction(object):
 
     def __str__(self):
         return '{}-{}'.format(self.provider_state, self.description)
-
-    def is_similar(self, other_interaction):
-        return str(self) == str(other_interaction)
 
     def to_json(self):
         return {
